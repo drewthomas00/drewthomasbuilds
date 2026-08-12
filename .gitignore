@@ -1,0 +1,5 @@
+# headless-render scratch profile created by ./build.py --pdf
+.render-profile/
+
+.DS_Store
+*.swp

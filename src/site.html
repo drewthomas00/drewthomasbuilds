@@ -1,0 +1,573 @@
+<title>Drew Thomas</title>
+<style>
+/* ─── Type ─────────────────────────────────────────────── */
+@font-face{font-family:'Bricolage';src:url(data:font/woff2;base64,__BRIC600__) format('woff2');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Bricolage';src:url(data:font/woff2;base64,__BRIC800__) format('woff2');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(data:font/woff2;base64,__NEWS400__) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(data:font/woff2;base64,__NEWS500__) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(data:font/woff2;base64,__NEWS400I__) format('woff2');font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:'PlexMono';src:url(data:font/woff2;base64,__PLEX400__) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'PlexMono';src:url(data:font/woff2;base64,__PLEX500__) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+
+/* ─── Tokens: light is the base, both dark states override ─ */
+:root{
+  --paper:#EFEFEC; --surface:#E6E6E1; --sunk:#E0E0DA;
+  --ink:#15171A; --ink-soft:#3E434A; --slate:#6A7079;
+  --rule:#D3D3CC; --rule-soft:#DFDFD8;
+  --brass:#8A5D1B; --brass-lit:#B8802E; --verdigris:#3A6259;
+  --glow:rgba(184,128,46,.13);
+  --display:'Bricolage',system-ui,sans-serif;
+  --body:'Newsreader',Georgia,serif;
+  --mono:'PlexMono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
+    --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
+    --rule:#292D33; --rule-soft:#1F2329;
+    --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
+    --glow:rgba(224,163,74,.10);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
+  --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
+  --rule:#292D33; --rule-soft:#1F2329;
+  --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
+  --glow:rgba(224,163,74,.10);
+}
+
+/* ─── Base ─────────────────────────────────────────────── */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:1.0625rem; line-height:1.62;
+  font-synthesis-weight:none; -webkit-font-smoothing:antialiased;
+}
+p{margin:0}
+a{color:var(--brass); text-underline-offset:.18em; text-decoration-thickness:.06em}
+a:hover{color:var(--brass-lit)}
+:focus-visible{outline:2px solid var(--brass-lit); outline-offset:3px; border-radius:2px}
+
+/* ─── The rail grid ────────────────────────────────────── */
+.band{border-top:1px solid var(--rule-soft)}
+.grid{
+  max-width:56rem; margin-inline:auto; padding:0 1.5rem;
+  display:grid; grid-template-columns:9.5rem minmax(0,1fr); gap:0 2.75rem;
+}
+.rail{
+  font-family:var(--mono); font-size:.6875rem; font-weight:500;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--slate);
+  padding-top:4.6rem; position:sticky; top:0; align-self:start; height:0;
+}
+.col{padding:4rem 0 4.6rem; display:flex; flex-direction:column; gap:1.45rem}
+
+/* ─── Hero ─────────────────────────────────────────────── */
+.hero{
+  padding:clamp(4.5rem,13vh,8rem) 1.5rem clamp(3.5rem,8vh,5.5rem);
+  max-width:56rem; margin-inline:auto;
+  background:radial-gradient(120% 80% at 12% 0%,var(--glow),transparent 62%);
+}
+.stamp{
+  font-family:var(--mono); font-size:.6875rem; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--slate);
+  display:flex; flex-wrap:wrap; gap:.5rem 1.4rem; margin-bottom:2.4rem;
+}
+.stamp b{color:var(--brass); font-weight:500}
+.thesis{
+  font-family:var(--display); font-weight:800;
+  font-size:clamp(2.35rem,7.4vw,4.6rem); line-height:1.02;
+  letter-spacing:-.032em; margin:0; text-wrap:balance;
+}
+.thesis span{display:block}
+.thesis .turn{color:var(--brass)}
+.lede{
+  margin-top:2rem; max-width:34rem; font-size:1.19rem;
+  line-height:1.58; color:var(--ink-soft);
+}
+.lede em{font-style:italic; color:var(--ink)}
+
+/* ─── Headings & prose ─────────────────────────────────── */
+.h{
+  font-family:var(--display); font-weight:600;
+  font-size:clamp(1.5rem,3.3vw,2rem); line-height:1.14;
+  letter-spacing:-.021em; margin:0; text-wrap:balance;
+}
+.col p{max-width:36rem; color:var(--ink-soft)}
+.col p strong{color:var(--ink); font-weight:500}
+.col p em{font-style:italic}
+
+/* ─── Stat strip ───────────────────────────────────────── */
+.stats{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+  margin-top:.6rem;
+}
+.stat{background:var(--paper); padding:1rem 1.15rem; display:flex; flex-direction:column; gap:.28rem}
+.stat b{
+  font-family:var(--display); font-weight:600; font-size:1.6rem;
+  letter-spacing:-.02em; color:var(--ink); font-variant-numeric:tabular-nums;
+}
+.stat span{font-family:var(--mono); font-size:.625rem; letter-spacing:.12em; text-transform:uppercase; color:var(--slate)}
+
+/* ─── Capability blocks ────────────────────────────────── */
+.caps{display:flex; flex-direction:column; gap:1.6rem; margin-top:.5rem}
+.cap{display:grid; grid-template-columns:7.5rem minmax(0,1fr); gap:1.4rem; align-items:start}
+.cap dt{
+  font-family:var(--mono); font-size:.6875rem; font-weight:500; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--brass); padding-top:.34rem; line-height:1.5;
+}
+.cap dd{margin:0; color:var(--ink-soft)}
+.cap dd b{color:var(--ink); font-weight:500}
+
+/* ─── Tool line ────────────────────────────────────────── */
+.stackline{
+  font-family:var(--mono); font-size:.715rem; letter-spacing:.045em;
+  color:var(--slate); margin-top:.62rem; line-height:1.75;
+}
+
+/* ─── Offer list ───────────────────────────────────────── */
+.offers{margin:.4rem 0 0; padding:0; display:flex; flex-direction:column; gap:0}
+.offers li{
+  list-style:none; padding:1.05rem 0; border-top:1px solid var(--rule-soft);
+}
+.offers li:first-child{border-top:none; padding-top:.2rem}
+.offers em{
+  font-family:var(--mono); font-style:normal; font-size:.75rem;
+  color:var(--brass); font-variant-numeric:tabular-nums;
+}
+.offers b{font-family:var(--display); font-weight:600; font-size:1.06rem; letter-spacing:-.012em; color:var(--ink); display:block; margin-bottom:.2rem}
+.offers p{font-size:.98rem}
+
+/* ─── Quotes ───────────────────────────────────────────── */
+.quotes{display:flex; flex-direction:column; gap:1rem; margin-top:.4rem}
+.quote{border-left:2px solid var(--brass); padding:.15rem 0 .15rem 1.15rem}
+.quote p{font-size:1.06rem; color:var(--ink)}
+.quote cite{
+  display:block; margin-top:.5rem; font-style:normal; font-family:var(--mono);
+  font-size:.7rem; letter-spacing:.09em; text-transform:uppercase; color:var(--slate);
+}
+.todo{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.06em; color:var(--verdigris);
+  border:1px dashed var(--verdigris); padding:.6rem .8rem; margin-top:.3rem;
+}
+
+/* ─── Life grid ────────────────────────────────────────── */
+.life{display:grid; grid-template-columns:repeat(auto-fit,minmax(13rem,1fr)); gap:1.5rem 2rem; margin-top:.5rem}
+.life h3{
+  font-family:var(--mono); font-size:.6875rem; font-weight:500; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--brass); margin:0 0 .45rem;
+}
+.life p{font-size:.98rem}
+
+/* ─── Contact ──────────────────────────────────────────── */
+.links{display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.9rem}
+.links a{
+  font-family:var(--mono); font-size:.8rem; letter-spacing:.03em; text-decoration:none;
+  border:1px solid var(--rule); padding:.6rem .95rem; color:var(--ink); background:var(--surface);
+  transition:border-color .15s,color .15s;
+}
+.links a:hover{border-color:var(--brass); color:var(--brass)}
+.foot{
+  max-width:56rem; margin-inline:auto; padding:1.6rem 1.5rem 3rem;
+  font-family:var(--mono); font-size:.68rem; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--slate); border-top:1px solid var(--rule-soft);
+}
+
+/* ─── Scan strip ───────────────────────────────────────── */
+.scan{border-top:1px solid var(--rule-soft); border-bottom:1px solid var(--rule-soft); background:var(--surface)}
+.scan-in{
+  max-width:56rem; margin-inline:auto; padding:2rem 1.5rem;
+  display:grid; grid-template-columns:9.5rem minmax(0,1fr); gap:.75rem 2.75rem;
+  align-items:baseline;
+}
+.scanlist{display:contents}
+.scan-in dt{
+  grid-column:1; font-family:var(--mono); font-size:.6875rem; font-weight:500;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--slate); line-height:1.5;
+}
+.scan-in dd{grid-column:2; margin:0; max-width:34rem; color:var(--ink-soft)}
+.scanlinks{grid-column:2; display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.85rem}
+.scanlinks a{
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.04em; text-decoration:none;
+  border:1px solid var(--rule); padding:.46rem .8rem; color:var(--ink); background:var(--paper);
+  transition:border-color .15s,color .15s;
+}
+.scanlinks a:hover{border-color:var(--brass); color:var(--brass)}
+@media (max-width:46rem){
+  .scan-in{grid-template-columns:minmax(0,1fr); gap:0}
+  .scan-in dt{margin-top:.95rem}
+  .scan-in dt:first-of-type{margin-top:0}
+  .scan-in dd,.scanlinks{grid-column:1}
+  .scan-in dd{margin-top:.2rem}
+}
+
+/* ─── Sticky section bar ───────────────────────────────── */
+.topbar{
+  position:fixed; inset:0 0 auto 0; z-index:20;
+  display:flex; align-items:center; gap:1.5rem;
+  padding:.62rem max(1.25rem,calc(50% - 28rem));
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  border-bottom:1px solid var(--rule-soft);
+  transform:translateY(-102%); transition:transform .28s cubic-bezier(.22,.68,.3,1);
+}
+@supports (backdrop-filter:blur(8px)){.topbar{backdrop-filter:blur(10px) saturate(1.4)}}
+.topbar.on{transform:none}
+.tb-name{
+  font-family:var(--display); font-weight:600; font-size:.92rem; letter-spacing:-.015em;
+  color:var(--ink); white-space:nowrap;
+}
+.tb-links{display:flex; gap:1.15rem; overflow-x:auto; scrollbar-width:none}
+.tb-links::-webkit-scrollbar{display:none}
+.tb-links a{
+  font-family:var(--mono); font-size:.66rem; font-weight:500; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--slate); text-decoration:none; white-space:nowrap;
+  padding:.2rem 0; border-bottom:1.5px solid transparent; transition:color .16s,border-color .16s;
+}
+.tb-links a:hover{color:var(--ink)}
+.tb-links a[aria-current]{color:var(--brass); border-bottom-color:var(--brass)}
+.band{scroll-margin-top:3.4rem}
+@media (max-width:34rem){.tb-name{display:none}}
+
+/* ─── Motion ───────────────────────────────────────────── */
+@keyframes rise{from{opacity:0; transform:translateY(.7rem)}to{opacity:1; transform:none}}
+.rise{animation:rise .72s cubic-bezier(.22,.68,.3,1) both}
+.d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.38s}
+@media (prefers-reduced-motion:reduce){.rise{animation:none}.topbar{transition:none}}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* ─── Narrow ───────────────────────────────────────────── */
+@media (max-width:46rem){
+  .grid{grid-template-columns:minmax(0,1fr); gap:0}
+  .rail{position:static; height:auto; padding-top:2.6rem}
+  .col{padding:.9rem 0 3rem}
+  .cap{grid-template-columns:minmax(0,1fr); gap:.35rem}
+  .cap dt{padding-top:0}
+}
+</style>
+
+<nav class="topbar" aria-label="Page sections">
+  <span class="tb-name">Drew Thomas</span>
+  <div class="tb-links">
+    <a href="#who">Background</a>
+    <a href="#elovarra">Elovarra</a>
+    <a href="#capability">Capability</a>
+    <a href="#contract">Contract</a>
+    <a href="#life">Off the clock</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="stamp rise d1">
+    <span>Drew Thomas</span>
+    <span>Georgia, USA</span>
+    <span>Software engineer &mdash; 7 yrs</span>
+    <span><b>Licensed cosmetologist &mdash; GA</b></span>
+  </div>
+  <h1 class="thesis rise d2">
+    <span>I write software.</span>
+    <span>I also cut hair.</span>
+    <span class="turn">Neither one is a hobby.</span>
+  </h1>
+  <p class="lede rise d3">
+    I&rsquo;m Drew. I&rsquo;ve been a software engineer for seven years, I&rsquo;m a licensed
+    cosmetologist who still takes clients on Saturdays, and right now I&rsquo;m building
+    <em>Elovarra</em> &mdash; salon software written by someone who actually works in a salon.
+  </p>
+</header>
+
+<section class="scan">
+  <div class="scan-in">
+    <dl class="scanlist">
+      <dt>Stack</dt>
+      <dd>Node &middot; React &middot; TypeScript &middot; PostgreSQL &middot; Docker &middot; AWS</dd>
+      <dt>Focus</dt>
+      <dd>End-to-end product builds, legacy modernization, and regulated systems</dd>
+      <dt>Open to</dt>
+      <dd>A limited amount of contract work, alongside my full-time role</dd>
+      <dt>Based</dt>
+      <dd>Georgia, USA &mdash; remote</dd>
+    </dl>
+    <div class="scanlinks">
+      <a href="/drew-thomas-resume.pdf">R&eacute;sum&eacute; (PDF)</a>
+      <a href="mailto:drew@drewthomasbuilds.com">Email</a>
+      <a href="https://github.com/drewthomas00">GitHub</a>
+      <a href="https://www.linkedin.com/in/drew-thomas-elovarra">LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="who">
+  <div class="grid">
+    <div class="rail">Who</div>
+    <div class="col">
+      <h2 class="h">How I got here</h2>
+      <p>
+        My dad was a software engineer and a consultant, so there was always a machine in
+        pieces somewhere in the house. I caught it early and never put it down.
+      </p>
+      <p>
+        I wrote my first line of code in 2013, in Lua, inside Minecraft. I built a robot to do
+        my mining for me so I could get back to building &mdash; and then spent the next year
+        turning it into a fleet that quarried the land behind my house on its own. That was the
+        whole thing right there: automate the boring part so you can go do the part you
+        actually care about. I have been chasing that ever since.
+      </p>
+      <p>
+        I&rsquo;ve worked since I was sixteen. Restaurants first &mdash; busboy, then
+        barback, then expo, then serving by eighteen &mdash; and warehouses through college,
+        including a long stretch on the night unload crew at one of the busiest FedEx Ground
+        hubs in the country. None of it was software, and all of it mattered: how a real
+        operation runs when it&rsquo;s slammed and something goes wrong, how a small business
+        actually makes money, how much a crew depends on you showing up on time, and what a
+        dollar is worth once you&rsquo;ve earned it that way.
+      </p>
+      <p>
+        What I actually wanted was to run something of my own. But I felt the financial
+        pressure everyone feels at eighteen, and STEM looked like the safe answer. I set out
+        aiming at biochemistry, then chemical engineering &mdash; until calculus and I reached
+        an impasse. I took it twice and did worse the second time. So I went back to the thing
+        I already knew I was good at, and studied Management Information Systems at the
+        University of Alabama. I graduated in 2019 with a <strong>3.8 overall</strong> and
+        better than a 4.0 in my major, and I&rsquo;ve been writing software professionally ever
+        since &mdash; most of it on legacy systems for a mortgage lender, which is high-stakes,
+        careful work and a very good teacher. The urge to build something of my own never went
+        anywhere.
+      </p>
+      <p>
+        Then I did something most engineers don&rsquo;t: I went to cosmetology school, as an
+        actual career change. I meant it. I planned on a decade behind the chair, and I&rsquo;m
+        still there every Saturday &mdash; I&rsquo;m good at it and I like it. What I
+        didn&rsquo;t plan on was that working a salon floor would show me a software problem I
+        couldn&rsquo;t put back down.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="elovarra">
+  <div class="grid">
+    <div class="rail">The company</div>
+    <div class="col">
+      <h2 class="h">Elovarra</h2>
+      <p>
+        Salon software is, almost without exception, built by people who have never worked a
+        salon. You can feel it the moment you use it. It treats the day like a tidy grid of
+        slots &mdash; not walk-ins, not color processing times, not a double-booked chair, not
+        a client who will only ever sit for one stylist.
+      </p>
+      <p>
+        <strong>I hold the license and I&rsquo;m still on the floor every Saturday</strong>, so
+        I know where those tools break. They break on me. Elovarra is what I&rsquo;m building
+        instead.
+      </p>
+      <div class="stats">
+        <div class="stat"><b>6 mo</b><span>Zero to platform</span></div>
+        <div class="stat"><b>Solo</b><span>Built &amp; operated</span></div>
+        <div class="stat"><b>SaaS</b><span>Multi-tenant</span></div>
+      </div>
+      <p>
+        It&rsquo;s closed source and it stays that way, so there&rsquo;s nothing here to browse.
+        What I&rsquo;ll say is that it isn&rsquo;t a prototype. It carries its own billing and
+        its own compliance obligations, it has AI features running in production, and I&rsquo;ve
+        written essentially all of it myself. Happy to go deep on any of that in a conversation.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="capability">
+  <div class="grid">
+    <div class="rail">Capability</div>
+    <div class="col">
+      <h2 class="h">What I actually do</h2>
+      <p>
+        The through-line is ownership. I&rsquo;m most useful when I&rsquo;m handed a whole
+        problem instead of a ticket &mdash; the schema, the service, the interface, the deploy,
+        and whatever is on fire at 2am.
+      </p>
+      <dl class="caps">
+        <div class="cap">
+          <dt>Building</dt>
+          <dd>
+            <b>Node and React, and a progressive web app whenever the problem allows for
+            one.</b> This is what I reach for when the choice is mine, and it is where I do my
+            best and fastest work &mdash; it is the stack I took Elovarra from nothing to a
+            running platform on, in six months, by myself.
+            <p class="stackline">Node &middot; React &middot; TypeScript &middot; PostgreSQL &middot; Redis &middot; Docker &middot; AWS</p>
+          </dd>
+        </div>
+        <div class="cap">
+          <dt>Keeping alive</dt>
+          <dd>
+            Years inside a <b>mortgage lender&rsquo;s legacy monolith</b> &mdash; a system with
+            real money moving through it, where an outage is expensive and a compliance mistake
+            is a good deal worse than that. I handle the regulatory side as well as the
+            breakage: <b>NMLS and HMDA</b> research, remediation and reporting corrections,
+            alongside the 500-level failures nobody else wants to trace. It is unglamorous work,
+            and it is why I am careful with other people&rsquo;s systems and calm when
+            production goes down.
+            <p class="stackline">iSeries / AS400 &middot; ColdFusion &middot; SQL &middot; JavaScript &middot; Regulatory compliance</p>
+          </dd>
+        </div>
+        <div class="cap">
+          <dt>Trained on</dt>
+          <dd><b>C# and .NET, full stack.</b> Where I was formally brought up as an engineer, and the grounding that makes picking up an unfamiliar enterprise codebase feel routine rather than daunting. Still work I&rsquo;m glad to take.</dd>
+        </div>
+        <div class="cap">
+          <dt>AI &amp; data</dt>
+          <dd>Shipping on the <b>Anthropic Claude SDK</b> &mdash; retrieval pipelines, embeddings, and assistant features built to hold up in production rather than in a demo.</dd>
+        </div>
+        <div class="cap">
+          <dt>Credentials</dt>
+          <dd>
+            <b>BS, Management Information Systems</b>, University of Alabama, 2019.
+            <b>AI/ML certification</b>, UT Austin. <b>Licensed cosmetologist</b>, State of
+            Georgia. <b>AWS Certified Developer</b> &mdash; passed in 2022, since lapsed, and
+            on my list to retake.
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="contract">
+  <div class="grid">
+    <div class="rail">Contract</div>
+    <div class="col">
+      <h2 class="h">Working together</h2>
+      <p>
+        I work full time and I&rsquo;m building Elovarra, so I take on contract work sparingly
+        and only when it&rsquo;s a genuinely good fit. The engagements I&rsquo;m best for usually
+        look like one of these:
+      </p>
+      <ul class="offers">
+        <li>
+          <b>Own the build end to end</b>
+          <p>You have an idea and no engineering team. I take it from nothing to something you can put in front of paying customers &mdash; which is exactly what I&rsquo;ve spent the last six months doing for myself.</p>
+        </li>
+        <li>
+          <b>Modernize it without breaking it</b>
+          <p>An old system with real revenue running through it, and no appetite for a rewrite that fails. I&rsquo;ve kept a lender&rsquo;s systems running under compliance pressure, and I know how to move carefully.</p>
+        </li>
+        <li>
+          <b>AI features that survive contact with users</b>
+          <p>Not a chatbot bolted onto a landing page. Retrieval, evaluation, guardrails, and the boring parts that make it trustworthy.</p>
+        </li>
+        <li>
+          <b>Software for people who work with their hands</b>
+          <p>Salons, trades, local service businesses. I have unusual sympathy for this problem and a license to prove it.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS — hidden until real quotes are collected. Uncomment to restore.
+<section class="band" id="testimonials">
+  <div class="grid">
+    <div class="rail">Word of mouth</div>
+    <div class="col">
+      <h2 class="h">What people say</h2>
+      <div class="quotes">
+        <blockquote class="quote">
+          <p>&ldquo;[PLACEHOLDER &mdash; a real quote from a client or colleague goes here.]&rdquo;</p>
+          <cite>Name, Role, Company</cite>
+        </blockquote>
+        <blockquote class="quote">
+          <p>&ldquo;[PLACEHOLDER &mdash; two or three of these is plenty.]&rdquo;</p>
+          <cite>Name, Role, Company</cite>
+        </blockquote>
+      </div>
+      
+    </div>
+  </div>
+</section>
+-->
+
+<section class="band" id="life">
+  <div class="grid">
+    <div class="rail">Off the clock</div>
+    <div class="col">
+      <h2 class="h">The rest of it</h2>
+      <div class="life">
+        <div>
+          <h3>The homelab</h3>
+          <p>I built my first computer in 2015 and never stopped. I have a Frankenstein pile of them &mdash; ARM and x86, more cable than floor &mdash; running containers and applications that run my business and my life. It has taught me more about operations than any job has.</p>
+        </div>
+        <div>
+          <h3>Making it mine</h3>
+          <p>I jailbroke my first iPhone around 2010 &mdash; another rabbit hole: custom ROMs, rooting, all of it. Same with computers: Linux, Windows, macOS, every flavor of dual boot, macOS running on a Windows laptop, and virtual machines for whatever is left over. Desktop or mobile, if a device tells me I can&rsquo;t do something, I take it personally.</p>
+        </div>
+        <div>
+          <h3>Around town</h3>
+          <p>I pitch in where my town needs hands &mdash; the food kitchen, the community haunted house, the concession stand at the fair. In college it was honors society service; now it&rsquo;s whatever is going on locally.</p>
+        </div>
+        <div>
+          <h3>Football</h3>
+          <p>I grew up a Georgia fan, went to Alabama for college, and then lived in Auburn for several years. Somehow I have made a home in all three. Bama has my heart, though. Roll Tide!</p>
+        </div>
+        <div>
+          <h3>Outside</h3>
+          <p>Hiking, camping, climbing, kayaking, rafting, surfing, tennis, and as much beach as I can get. I like yard work and working on my house too, which I admit is a different kind of fun. Mostly I just like being active &mdash; and my golden retriever partner in crime considers it all non-negotiable.</p>
+        </div>
+        <div>
+          <h3>Music, games, film</h3>
+          <p>I play piano and guitar &mdash; mostly learning other people&rsquo;s songs. There is music on almost constantly, and when there isn&rsquo;t I&rsquo;m watching a film or a show, or playing something. My taste across all of it is very broad. I can appreciate pretty much anything that was made with artistic vision and care.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="contact">
+  <div class="grid">
+    <div class="rail">Contact</div>
+    <div class="col">
+      <h2 class="h">Get in touch</h2>
+      <p>
+        Hiring, contracting, or just curious about Elovarra &mdash; email is best, and I answer
+        all of it.
+      </p>
+      <div class="links">
+        <a href="mailto:drew@drewthomasbuilds.com">drew@drewthomasbuilds.com</a>
+        <a href="https://github.com/drewthomas00">GitHub</a>
+        <a href="https://www.linkedin.com/in/drew-thomas-elovarra">LinkedIn</a>
+        <a href="/drew-thomas-resume.pdf">R&eacute;sum&eacute; (PDF)</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">Drew Thomas &mdash; Georgia, USA</footer>
+
+<script>
+(function(){
+  var bar  = document.querySelector('.topbar'),
+      hero = document.querySelector('.hero'),
+      links= Array.prototype.slice.call(document.querySelectorAll('.tb-links a'));
+  if(!bar || !hero || !('IntersectionObserver' in window)) return;
+
+  new IntersectionObserver(function(e){
+    bar.classList.toggle('on', !e[0].isIntersecting);
+  }, {rootMargin:'-52px 0px 0px 0px'}).observe(hero);
+
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting) return;
+      links.forEach(function(a){ a.removeAttribute('aria-current'); });
+      links.forEach(function(a){
+        if(a.getAttribute('href') === '#'+en.target.id) a.setAttribute('aria-current','true');
+      });
+    });
+  }, {rootMargin:'-45% 0px -50% 0px'});
+  links.forEach(function(a){
+    var sec = document.getElementById(a.getAttribute('href').slice(1));
+    if(sec) spy.observe(sec);
+  });
+})();
+</script>

@@ -1,0 +1,181 @@
+<title>Drew Thomas Résumé</title>
+<style>
+@font-face{font-family:'Bricolage';src:url(data:font/woff2;base64,__BRIC600__) format('woff2');font-weight:600;font-style:normal}
+@font-face{font-family:'Bricolage';src:url(data:font/woff2;base64,__BRIC800__) format('woff2');font-weight:800;font-style:normal}
+@font-face{font-family:'Newsreader';src:url(data:font/woff2;base64,__NEWS400__) format('woff2');font-weight:400;font-style:normal}
+@font-face{font-family:'Newsreader';src:url(data:font/woff2;base64,__NEWS500__) format('woff2');font-weight:500;font-style:normal}
+@font-face{font-family:'PlexMono';src:url(data:font/woff2;base64,__PLEX400__) format('woff2');font-weight:400;font-style:normal}
+@font-face{font-family:'PlexMono';src:url(data:font/woff2;base64,__PLEX500__) format('woff2');font-weight:500;font-style:normal}
+
+:root{
+  --paper:#FFF; --ink:#15171B; --ink-soft:#33383E; --slate:#666C74; --rule:#CFCFC9; --brass:#7E5417;
+  --display:'Bricolage',system-ui,sans-serif; --body:'Newsreader',Georgia,serif; --mono:'PlexMono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161A; --ink:#E9E9E5; --ink-soft:#BABEC4; --slate:#888E96; --rule:#2B2F35; --brass:#E0A34A;}}
+:root[data-theme="dark"]{
+  --paper:#14161A; --ink:#E9E9E5; --ink-soft:#BABEC4; --slate:#888E96; --rule:#2B2F35; --brass:#E0A34A;}
+
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--body);
+     font-size:10pt; line-height:1.27; -webkit-font-smoothing:antialiased}
+p{margin:0}
+a{color:inherit; text-decoration:none}
+.sheet{max-width:8.5in; margin-inline:auto; padding:.38in .4in; display:flex; flex-direction:column; gap:.34rem}
+
+.name{font-family:var(--display); font-weight:800; font-size:22pt; letter-spacing:-.03em; line-height:1; margin:0}
+.tagline{font-family:var(--body); font-style:italic; font-size:10.4pt; color:var(--brass); margin-top:.14rem}
+.contact{font-family:var(--mono); font-size:7.5pt; letter-spacing:.02em; color:var(--slate);
+         display:flex; flex-wrap:wrap; gap:.12rem .78rem; margin-top:.3rem}
+
+.summary{color:var(--ink-soft); margin-top:.24rem}
+.main{display:grid; grid-template-columns:minmax(0,1.62fr) minmax(0,1fr); gap:.28rem 1.05rem; align-items:start; margin-top:.42rem}
+.colL,.colR{display:flex; flex-direction:column; gap:.5rem; min-width:0}
+
+h2.hd{font-family:var(--mono); font-size:7.4pt; font-weight:500; letter-spacing:.16em; text-transform:uppercase;
+      color:var(--brass); margin:0 0 .26rem; padding-bottom:.16rem; border-bottom:1.2px solid var(--rule)}
+
+.entry{break-inside:avoid}
+.entry + .entry{margin-top:.42rem}
+.eh{display:flex; justify-content:space-between; align-items:baseline; gap:.6rem}
+.role{font-family:var(--display); font-weight:600; font-size:10.4pt; letter-spacing:-.012em; margin:0}
+.role span{color:var(--slate)}
+.when{font-family:var(--mono); font-size:7.3pt; letter-spacing:.03em; color:var(--slate); white-space:nowrap; font-variant-numeric:tabular-nums}
+.sub{font-family:var(--mono); font-size:7.5pt; letter-spacing:.02em; color:var(--slate); margin-top:.06rem}
+ul.pts{margin:.16rem 0 0; padding:0; display:flex; flex-direction:column; gap:.1rem}
+ul.pts li{list-style:none; padding-left:.7rem; position:relative; color:var(--ink-soft)}
+ul.pts li::before{content:''; position:absolute; left:.06rem; top:.58em; width:.26rem; height:1px; background:var(--brass)}
+ul.pts b{color:var(--ink); font-weight:500}
+
+.skills{display:flex; flex-direction:column; gap:.2rem; margin:0}
+.skills dt{font-family:var(--mono); font-size:6.9pt; letter-spacing:.09em; text-transform:uppercase; color:var(--slate)}
+.skills dd{margin:0 0 .1rem; color:var(--ink-soft)}
+
+@media (max-width:40rem){.main{grid-template-columns:minmax(0,1fr)}}
+@media print{
+  @page{size:letter; margin:.34in}
+  .sheet{padding:0; max-width:none}
+  a{color:inherit}
+}
+</style>
+
+<div class="sheet">
+  <header>
+    <h1 class="name">Drew Thomas</h1>
+    <p class="tagline">Software engineer &middot; Founder, Elovarra &middot; Licensed cosmetologist</p>
+    <div class="contact">
+      <span>Georgia, USA</span>
+      <a href="mailto:drew@drewthomasbuilds.com">drew@drewthomasbuilds.com</a>
+      <a href="https://drewthomasbuilds.com">drewthomasbuilds.com</a>
+      <a href="https://www.linkedin.com/in/drew-thomas-elovarra">linkedin.com/in/drew-thomas-elovarra</a>
+      <a href="https://github.com/drewthomas00">github.com/drewthomas00</a>
+    </div>
+  </header>
+  <p class="summary">Software engineer with seven years across regulated financial systems and greenfield
+      product work. Currently building a multi-tenant SaaS platform end to end as its sole
+      engineer, while delivering compliance and production engineering for a national
+      mortgage lender. Also a practicing licensed cosmetologist, which is where the platform
+      came from. Comfortable owning a system outright &mdash; schema through deploy through
+      the 2am incident.</p>
+
+  <div class="main">
+    <div class="colL">
+      <section><h2 class="hd">Experience</h2>
+        <div class="entry">
+      <div class="eh">
+        <p class="role">Founder &amp; Principal Engineer <span>&middot; Elovarra</span></p>
+        <p class="when">Feb 2026 &ndash; Present</p>
+      </div>
+      <p class="sub">Salon &amp; local-services SaaS platform &middot; Georgia, USA</p>
+      <ul class="pts">
+        <li>Sole engineer on a <b>multi-tenant SaaS platform</b> for salon and local-service businesses &mdash; application, data layer, background processing, deployment pipeline, and production operations.</li>
+        <li>Built and operate the surrounding toolchain the business runs on, including <b>deployment tracking, log aggregation, cloud inventory, and double-entry accounting</b>.</li>
+        <li>Shipped production <b>AI features on the Anthropic Claude SDK</b> &mdash; retrieval pipelines, embeddings, and assistant surfaces built to hold up under real use.</li>
+        <li>Carries its own <b>billing and regulatory compliance</b> obligations. Taken from a standing start to a running platform in <b>six months</b>, concurrent with part-time consulting and weekend salon work.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="eh">
+        <p class="role">Software Engineer, Consultant <span>&middot; CGI</span></p>
+        <p class="when">Jun 2019 &ndash; Present</p>
+      </div>
+      <p class="sub">Client: Clayton Homes / Vanderbilt Mortgage &amp; Finance &middot; Knoxville, TN &middot; Jan 2020 &ndash; Present</p>
+      <ul class="pts">
+        <li>Maintain and extend a <b>large monolithic ColdFusion application</b> serving a national mortgage lender, on a four-person engineering team.</li>
+        <li>Deliver regulatory compliance work for <b>NMLS and HMDA</b> &mdash; research, remediation, and reporting corrections in a regulated consumer-lending environment.</li>
+        <li>Own backend promotional and pricing configuration work; previously owned the <b>external-facing customer application</b>.</li>
+        <li>Diagnose and resolve <b>production incidents</b>, including 500-level failures, across a legacy codebase where downtime carries direct financial cost.</li>
+        <li>Reduced to <b>part-time in October 2024</b> to attend cosmetology school, and continued part-time while building Elovarra.</li>
+      </ul>
+      <p class="sub" style="margin-top:.45rem">Client: ProAssurance &middot; Birmingham, AL &middot; Sep 2019 &ndash; Dec 2019</p>
+      <ul class="pts">
+        <li>Automated the weekly actuarial table update process in <b>PowerShell</b>, eliminating roughly <b>20 developer-hours of manual work per week</b>.</li>
+        <li>Backfilled a departing engineer mid-project and carried a <b>Workday implementation</b> and an <b>accounting system modernization</b> to completion, onboarding into an unfamiliar regulated codebase under deadline.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="eh">
+        <p class="role">Cosmetologist</p>
+        <p class="when">2026 &ndash; Present</p>
+      </div>
+      <p class="sub">Joseph &amp; Friends &middot; Georgia &middot; Saturdays, alongside engineering work</p>
+      <ul class="pts">
+        <li>Practicing stylist since licensure. A career change undertaken in earnest, and the direct source of Elovarra&rsquo;s product direction.</li>
+      </ul>
+      <p class="sub" style="margin-top:.45rem">Salon Assistant &middot; Joseph &amp; Friends, Nov 2025 &ndash; 2026 &middot; Jamison Shaw Hairdressers, Jul 2025 &ndash; Nov 2025</p>
+      <ul class="pts">
+        <li>Worked salon floors while completing licensure hours &mdash; learning the operational realities of the business from the inside.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="eh">
+        <p class="role">Cybersecurity Intern <span>&middot; Concilium1</span></p>
+        <p class="when">Summer 2018</p>
+      </div>
+      <ul class="pts">
+        <li>Built <b>ServiceNow dashboards and reports</b> supporting security operations and client reporting.</li>
+      </ul>
+    </div>
+      </section>
+    </div>
+    <div class="colR">
+      <section><h2 class="hd">Technical</h2><dl class="skills">
+      <dt>Languages</dt><dd>JavaScript, TypeScript, C#, SQL, ColdFusion, Python</dd>
+      <dt>Frameworks</dt><dd>Node, React, Express, .NET, FastAPI</dd>
+      <dt>Data</dt><dd>PostgreSQL, Redis, IBM iSeries / AS400</dd>
+      <dt>Platform</dt><dd>AWS, Docker, Linux, Nginx, GitHub Actions</dd>
+      <dt>Practice</dt><dd>Progressive web apps, REST APIs, CI/CD, incident response, regulatory compliance (NMLS, HMDA)</dd>
+    </dl></section>
+      <section><h2 class="hd">Education</h2><div class="entry">
+        <div class="eh">
+          <p class="role">BS, Management Information Systems</p>
+          <p class="when">2019</p>
+        </div>
+        <p class="sub">University of Alabama</p>
+        <ul class="pts">
+          <li>3.8 GPA overall; above 4.0 in major coursework.</li>
+          <li>Led the capstone team that built and <b>delivered a fantasy golf application to a live external client</b>.</li>
+          <li>Leadership, Association for Information Management Systems &mdash; ran the speaker series and corporate recruiting events.</li>
+          <li>Regular community service through the honors society, including local cleanup work.</li>
+        </ul>
+      </div></section>
+      <section><h2 class="hd">Certifications &amp; Service</h2><div class="entry">
+        <ul class="pts">
+          <li><b>AWS Certified Developer &ndash; Associate</b> &mdash; 2022 (lapsed)</li>
+          <li><b>Artificial Intelligence &amp; Machine Learning</b>, University of Texas at Austin &mdash; 2021</li>
+          <li><b>Cosmetology License</b>, State of Georgia &mdash; 2026</li>
+        </ul>
+      </div>
+      <div class="entry" style="margin-top:.7rem">
+        <p class="sub" style="color:var(--brass); letter-spacing:.14em; text-transform:uppercase; font-size:7.8pt">Service</p>
+        <ul class="pts">
+          <li>Campus recruiting volunteer at CGI &mdash; university visits and candidate mentoring.</li>
+          <li>Community volunteering close to home &mdash; the food kitchen, the town&rsquo;s haunted house, and the concession stand at the county fair.</li>
+        </ul>
+      </div></section>
+    </div>
+  </div>
+</div>
