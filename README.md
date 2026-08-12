@@ -1,40 +1,53 @@
 # drewthomasbuilds.com
 
-Personal site. Static, no dependencies, no framework. Deployed on Cloudflare Pages.
+Personal site. Static, no framework, no build step. Deployed on Cloudflare Pages.
 
 ## Editing
 
-Edit the files in `src/` — **not** the ones in `public/`.
+`public/` holds the real files — edit them directly.
 
 | File | What it is |
 |---|---|
-| `src/site.html` | The site. All copy and CSS live here. ~28 KB. |
-| `src/resume.html` | The one-page résumé. |
-| `src/fonts.json` | Base64 woff2 payloads. Don't edit by hand. |
+| `public/index.html` | The site. All copy and CSS live here. ~27 KB. |
+| `public/resume.html` | The one-page résumé. |
+| `public/fonts/*.woff2` | Bricolage Grotesque, Newsreader, IBM Plex Mono. |
+| `public/_headers` | Cache-control; fonts are cached for a year. |
 
-The sources carry `__BRIC600__`-style placeholders where the font data goes, which
-keeps them small enough to actually work in. Page content starts after `</style>`.
+Push to `main` and Cloudflare publishes it. There is no build command, so nothing
+in CI can break between a commit and a live site.
 
-Then rebuild:
+## The one thing that needs regenerating
+
+The downloadable résumé PDF is rendered from `public/resume.html`:
 
 ```sh
-./build.py          # writes public/index.html and public/resume.html
-./build.py --pdf    # also re-renders public/drew-thomas-resume.pdf
+./build.py
 ```
 
-`public/` is the build output and what Cloudflare Pages serves. Committing it is
-deliberate: it means the deploy needs no build step at all.
+It prints the page count, because the résumé is tuned to fit on exactly one page
+and a couple of added lines will silently spill it onto a second.
 
-## Deploying
+The script serves `public/` over a local web server rather than opening the file
+directly. That is deliberate: the pages load fonts as separate files, and Chromium
+will not fetch subresources into a `file://` document, so a direct render comes out
+set in fallback typefaces — which looks plausible and is wrong.
 
-Pushing to `main` publishes. Cloudflare Pages is configured with no build command
-and `public` as the output directory.
+If a render hangs, look for stranded headless browsers before retrying:
+
+```sh
+ps -eo pid,etimes,args | grep -- --headless=new
+```
 
 ## Notes
 
-- The testimonials section in `src/site.html` is commented out until there are real
-  quotes to put in it. Uncomment the block to bring it back, styling intact.
-- The résumé fits on one page by design. After editing it, run `./build.py --pdf`
-  and check the page count — a résumé that spills onto a second page with a third of
-  it empty looks worse than either a full one-pager or a full two-pager.
-- Fonts are embedded rather than linked so the pages have zero external requests.
+- **Fonts are separate files, not embedded.** Earlier versions inlined them as
+  base64, which made every page ~700 KB and forced a second download of the same
+  typefaces when someone opened the résumé. Splitting them dropped the HTML to
+  ~27 KB and lets the browser cache the fonts across both pages.
+- **Font URLs must stay absolute** (`/fonts/x.woff2`). Relative paths happen to
+  work today because both pages sit at the root, but break the moment a page moves
+  into a subdirectory.
+- The testimonials section in `index.html` is commented out until there are real
+  quotes for it. Uncomment the block to bring it back, styling intact.
+- `og.png` is the social preview card shown when the link is shared. If the hero
+  copy changes, that image goes stale — it is a rendered screenshot, not live text.
