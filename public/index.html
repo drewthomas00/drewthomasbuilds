@@ -117,11 +117,24 @@ a:hover{color:var(--brass-lit)}
 .col p strong{color:var(--ink); font-weight:500}
 .col p em{font-style:italic}
 
-/* Portrait — closes the origin story; sized to sit inside the prose, not above it */
-.portrait{margin:.35rem 0 0}
+/* Portrait — floats into the origin story so the text sets around it.
+   .prose exists because .col is a flex column, and floats do not apply to
+   flex items; the paragraphs need one shared block context to wrap inside. */
+.prose{max-width:36rem}
+.prose p{margin:0 0 1.45rem}
+.prose p:last-child{margin-bottom:0}
+.prose::after{content:''; display:block; clear:both}
+.portrait{
+  float:right; margin:.3rem 0 1.1rem 1.6rem; width:clamp(7.5rem,19vw,10rem);
+  shape-outside:inset(0 round 2px);
+}
 .portrait img{
-  display:block; width:clamp(8.5rem,20vw,10.5rem); height:auto; aspect-ratio:1;
+  display:block; width:100%; height:auto; aspect-ratio:1;
   object-fit:cover; border-radius:2px; border:1px solid var(--rule);
+}
+@media (max-width:34rem){
+  /* Too narrow to set type beside it — the wrap would leave 12-character lines */
+  .portrait{float:none; width:9rem; margin:0 0 1.45rem}
 }
 
 /* ─── Stat strip ───────────────────────────────────────── */
@@ -332,6 +345,14 @@ html{scroll-behavior:smooth}
     <div class="rail">Who</div>
     <div class="col">
       <h2 class="h">How I got here</h2>
+      <div class="prose">
+      <figure class="portrait">
+        <picture>
+          <source srcset="/drew-thomas.webp" type="image/webp">
+          <img src="/drew-thomas.jpg" width="400" height="400" alt="Drew Thomas"
+               loading="lazy" decoding="async">
+        </picture>
+      </figure>
       <p>
         My dad was a software engineer and a consultant, so there was always a machine in
         pieces somewhere in the house. I caught it early and never put it down.
@@ -371,13 +392,7 @@ html{scroll-behavior:smooth}
         didn&rsquo;t plan on was that working a salon floor would show me a software problem I
         couldn&rsquo;t put back down.
       </p>
-      <figure class="portrait">
-        <picture>
-          <source srcset="/drew-thomas.webp" type="image/webp">
-          <img src="/drew-thomas.jpg" width="400" height="400" alt="Drew Thomas"
-               loading="lazy" decoding="async">
-        </picture>
-      </figure>
+      </div>
     </div>
   </div>
 </section>
