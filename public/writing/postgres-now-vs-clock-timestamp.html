@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOW() is not now — Drew Thomas</title>
+<meta name="description" content="Postgres NOW() is transaction_timestamp(), frozen when the transaction opened. In a distributed lease that makes an expired lock read as still held — silently, and only in production.">
+<link rel="canonical" href="https://drewthomasbuilds.com/writing/postgres-now-vs-clock-timestamp.html">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NOW() is not now">
+<meta property="og:description" content="Postgres NOW() is transaction_timestamp(), frozen when the transaction opened. In a distributed lease that makes an expired lock read as still held — silently, and only in production.">
+<meta property="og:url" content="https://drewthomasbuilds.com/writing/postgres-now-vs-clock-timestamp.html">
+<meta property="og:image" content="https://drewthomasbuilds.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Bricolage';src:url(/fonts/bricolage-800.woff2) format('woff2');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-500.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-400-italic.woff2) format('woff2');font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:'PlexMono';src:url(/fonts/plexmono-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'PlexMono';src:url(/fonts/plexmono-500.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+
+:root{
+  --paper:#EFEFEC; --surface:#E6E6E1; --sunk:#E0E0DA;
+  --ink:#15171A; --ink-soft:#3E434A; --slate:#6A7079;
+  --rule:#D3D3CC; --rule-soft:#DFDFD8;
+  --brass:#8A5D1B; --brass-lit:#B8802E; --verdigris:#3A6259;
+  --display:'Bricolage',system-ui,sans-serif;
+  --body:'Newsreader',Georgia,serif;
+  --mono:'PlexMono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
+    --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
+    --rule:#292D33; --rule-soft:#1F2329;
+    --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
+  --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
+  --rule:#292D33; --rule-soft:#1F2329;
+  --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:1.0625rem; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.sheet{max-width:40rem; margin-inline:auto; padding:3rem 1.5rem 5rem}
+a{color:var(--brass); text-decoration:none; border-bottom:1px solid var(--rule)}
+a:hover{border-bottom-color:var(--brass)}
+a:focus-visible{outline:2px solid var(--brass-lit); outline-offset:3px; border-radius:2px}
+
+.back{
+  font-family:var(--mono); font-size:.6875rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--slate); border:0; display:inline-block; margin-bottom:2.5rem;
+}
+.back:hover{color:var(--brass)}
+
+h1{
+  font-family:var(--display); font-weight:800;
+  font-size:clamp(2rem,5.6vw,3rem); line-height:1.03; letter-spacing:-.032em;
+  margin:0 0 .9rem; text-wrap:balance;
+}
+.dateline{
+  font-family:var(--mono); font-size:.6875rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--slate); margin:0 0 2.6rem;
+}
+.standfirst{font-size:1.17rem; color:var(--ink-soft); margin:0 0 2.6rem; font-style:italic}
+
+h2{
+  font-family:var(--display); font-weight:800; font-size:1.4rem;
+  letter-spacing:-.02em; margin:2.8rem 0 .9rem; text-wrap:balance;
+}
+p{margin:0 0 1.15rem; color:var(--ink-soft)}
+p strong{color:var(--ink); font-weight:500}
+ul{margin:0 0 1.15rem; padding-left:1.15rem; color:var(--ink-soft)}
+li{margin-bottom:.4rem}
+
+code{font-family:var(--mono); font-size:.86em; color:var(--brass); word-break:break-word}
+pre{
+  font-family:var(--mono); font-size:.8125rem; line-height:1.62;
+  background:var(--sunk); border:1px solid var(--rule-soft); border-left:2.5px solid var(--brass);
+  border-radius:2px; padding:.95rem 1.05rem; overflow-x:auto; margin:0 0 1.4rem; color:var(--ink-soft);
+}
+pre code{color:inherit; font-size:inherit}
+
+.pull{
+  border-left:2.5px solid var(--brass); background:var(--surface);
+  padding:1rem 1.15rem; margin:0 0 1.4rem; border-radius:2px;
+}
+.pull p{margin:0; color:var(--ink)}
+
+figcaption{
+  font-family:var(--mono); font-size:.6875rem; letter-spacing:.06em;
+  color:var(--slate); margin:-.9rem 0 1.6rem;
+}
+footer{
+  margin-top:3.5rem; padding-top:1.4rem; border-top:1.5px solid var(--rule);
+  font-size:.95rem; color:var(--slate);
+}
+</style>
+</head>
+<body>
+<article class="sheet">
+
+<a class="back" href="/writing.html">&larr; Writing</a>
+
+<h1>NOW() is not now</h1>
+<p class="dateline">13 August 2026 &middot; Postgres</p>
+
+<p class="standfirst">A distributed lock that silently stops working the moment you pass it a
+transaction — and reads perfectly correct while it does.</p>
+
+<p>
+  Node schedulers start their jobs in every replica. <code>node-cron</code> and friends have no
+  idea another copy of your process exists, so the moment you run two containers, both fire the
+  same tick. An in-process <code>running</code> flag does nothing about it — it only prevents
+  overlap <em>within</em> one process. If the job sends email or charges cards, you now do that
+  twice.
+</p>
+
+<p>
+  The fix, if you already have Postgres, is a lease: one row per job, claimed by a single
+  conditional upsert. Whoever writes the row runs the tick, everybody else gets nothing back and
+  skips.
+</p>
+
+<pre><code>INSERT INTO cron_leases (job_name, lease_until, holder)
+VALUES ($1, NOW() + ($2 * interval '1 millisecond'), $3)
+ON CONFLICT (job_name) DO UPDATE
+  SET lease_until = EXCLUDED.lease_until,
+      holder      = EXCLUDED.holder
+  WHERE cron_leases.lease_until &lt;= NOW()
+RETURNING job_name</code></pre>
+
+<p>
+  The <code>WHERE</code> on the <code>DO UPDATE</code> is the whole mechanism. Without it every
+  replica overwrites the row and all of them run. With it, the update only applies when the
+  stored lease has already expired, so exactly one claimant gets a row back.
+</p>
+
+<p>
+  Every timestamp comes from the database rather than from a replica, which is the point — the
+  machines never compare their own clocks to anything, so skew between them cannot produce two
+  winners.
+</p>
+
+<p>That query has a bug. It took me a while to see it, and longer to believe it.</p>
+
+<h2>NOW() is frozen</h2>
+
+<p>
+  <strong><code>NOW()</code> in Postgres is an alias for <code>transaction_timestamp()</code></strong>.
+  It returns the moment the surrounding transaction <em>started</em>, and it returns that same
+  value for the rest of the transaction no matter how long it runs. This is documented, entirely
+  intentional, and the correct default for most things — it is what makes every row in one
+  transaction agree about when "now" was.
+</p>
+
+<p>
+  It is exactly wrong for a lease. The whole design rests on reading the database's current wall
+  clock, and inside a transaction that has been open for a few seconds, <code>NOW()</code> is not
+  the current wall clock. It is history.
+</p>
+
+<div class="pull">
+  <p>
+    The lease looks fine in every test, because a test calls it on a pool, where each statement is
+    its own transaction and <code>NOW()</code> is always fresh. The bug needs a caller who passes a
+    transaction handle — which is a perfectly reasonable thing to do, and which somebody eventually does.
+  </p>
+</div>
+
+<h2>Watching it happen</h2>
+
+<p>
+  This is the kind of claim worth proving rather than reasoning about, so I opened a transaction
+  against a real database, sat in it, and asked both functions what time it was.
+</p>
+
+<pre><code>BEGIN;
+SELECT pg_sleep(3);
+SELECT clock_timestamp() - now() AS now_is_stale_by;
+
+ now_is_stale_by
+-----------------
+ 00:00:03.006</code></pre>
+
+<p>
+  Three seconds of drift, and it grows for as long as the transaction stays open. Now put a lease in
+  front of it. Claim one that expires in 60&nbsp;ms, wait it out, then try to re-claim from inside a
+  transaction that has been open for three seconds:
+</p>
+
+<pre><code>-- lease_until is 60ms in the past. It has genuinely expired.
+-- Inside a 3s-old transaction:
+
+  WHERE cron_leases.lease_until &lt;= NOW()              -- false. 0 rows. Skipped.
+  WHERE cron_leases.lease_until &lt;= clock_timestamp()  -- true.  1 row.  Claimed.</code></pre>
+
+<p>
+  The lease had expired. The row was free. And the claim returned nothing, because it compared a
+  present-tense fact against a past-tense clock.
+</p>
+
+<h2>Why this one is nasty</h2>
+
+<p>The failure is bad in both directions, and neither direction announces itself.</p>
+
+<ul>
+  <li>
+    <strong>The comparison is stale, so an expired lease reads as still held.</strong> Every replica
+    skips. The job stops running — not with an error, but by unanimously and correctly deciding
+    somebody else has it. Your monitoring sees a healthy fleet doing nothing.
+  </li>
+  <li>
+    <strong>The expiry it writes is stale too.</strong> <code>NOW() + interval</code> anchors the new
+    lease to when the transaction opened, so a lease meant to reserve the next fifty minutes expires
+    fifty minutes after a moment that has already passed. A second replica can claim inside the
+    window you thought you had reserved — reintroducing the duplicate run you installed the lease to
+    prevent.
+  </li>
+</ul>
+
+<p>
+  And it is invisible until the exact conditions line up: a caller passing a transaction, that
+  transaction being open long enough to matter, and a lease near its boundary. Unit tests on a pool
+  will never see it. It waits for production, where transactions are longer and the boundaries get
+  hit constantly.
+</p>
+
+<h2>The fix</h2>
+
+<p>
+  <code>clock_timestamp()</code> reads the actual current time, every call, transaction or not.
+  Four occurrences — both writes and both comparisons:
+</p>
+
+<pre><code>INSERT INTO cron_leases (job_name, lease_until, holder, claimed_at)
+VALUES ($1, clock_timestamp() + ($2::bigint * interval '1 millisecond'), $3, clock_timestamp())
+ON CONFLICT (job_name) DO UPDATE
+  SET lease_until = EXCLUDED.lease_until,
+      holder      = EXCLUDED.holder,
+      claimed_at  = clock_timestamp()
+  WHERE cron_leases.lease_until &lt;= clock_timestamp()
+RETURNING job_name</code></pre>
+
+<p>
+  Postgres gives you four of these and the differences matter:
+  <code>transaction_timestamp()</code> (which is <code>NOW()</code>) is fixed for the transaction;
+  <code>statement_timestamp()</code> is fixed for the statement; <code>clock_timestamp()</code> moves
+  continuously; and <code>timeofday()</code> is the same as clock but returns text.
+  <strong>Anything that reasons about elapsed real time wants <code>clock_timestamp()</code></strong>,
+  and almost everything else wants <code>NOW()</code>.
+</p>
+
+<p>
+  The general lesson is smaller than the bug: the safe-looking default is safe because it makes a
+  transaction internally consistent, and a lock is one of the few things that needs to see outside
+  its own transaction. When a query's correctness depends on real elapsed time, the frozen clock is
+  the wrong instrument, however natural <code>NOW()</code> reads.
+</p>
+
+<footer>
+  <p>
+    This came out of <a href="https://github.com/drewthomas00/pg-cron-lease">pg-cron-lease</a>, a
+    small package that does the above and nothing else. Its integration suite races ten claimants at
+    one occurrence against a real Postgres, and pins this behaviour by claiming from inside a
+    deliberately long-open transaction — because a regex over a SQL string cannot tell you whether
+    the SQL works.
+  </p>
+  <p><a href="/">Drew Thomas</a> &middot; <a href="/writing.html">More writing</a></p>
+</footer>
+
+</article>
+</body>
+</html>

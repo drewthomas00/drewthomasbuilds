@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing — Drew Thomas</title>
+<meta name="description" content="Notes from Drew Thomas on things that broke in production and were worth writing down — Postgres, distributed jobs, webhook verification, compliance.">
+<link rel="canonical" href="https://drewthomasbuilds.com/writing.html">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Writing — Drew Thomas">
+<meta property="og:description" content="Notes on things that broke in production and were worth writing down.">
+<meta property="og:url" content="https://drewthomasbuilds.com/writing.html">
+<meta property="og:image" content="https://drewthomasbuilds.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/plexmono-500.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:'Bricolage';src:url(/fonts/bricolage-800.woff2) format('woff2');font-weight:800;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-400-italic.woff2) format('woff2');font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:'PlexMono';src:url(/fonts/plexmono-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'PlexMono';src:url(/fonts/plexmono-500.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
+
+:root{
+  --paper:#EFEFEC; --surface:#E6E6E1; --sunk:#E0E0DA;
+  --ink:#15171A; --ink-soft:#3E434A; --slate:#6A7079;
+  --rule:#D3D3CC; --rule-soft:#DFDFD8;
+  --brass:#8A5D1B; --brass-lit:#B8802E; --verdigris:#3A6259;
+  --glow:rgba(184,128,46,.13);
+  --display:'Bricolage',system-ui,sans-serif;
+  --body:'Newsreader',Georgia,serif;
+  --mono:'PlexMono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
+    --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
+    --rule:#292D33; --rule-soft:#1F2329;
+    --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
+    --glow:rgba(224,163,74,.10);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
+  --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
+  --rule:#292D33; --rule-soft:#1F2329;
+  --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
+  --glow:rgba(224,163,74,.10);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:1.0625rem; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.sheet{max-width:42rem; margin-inline:auto; padding:3rem 1.5rem 5rem}
+a{color:var(--brass); text-decoration:none}
+a:focus-visible{outline:2px solid var(--brass-lit); outline-offset:3px; border-radius:2px}
+
+.back{
+  font-family:var(--mono); font-size:.6875rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--slate); display:inline-block; margin-bottom:2.5rem;
+}
+.back:hover{color:var(--brass)}
+
+header{
+  padding-bottom:2rem; margin-bottom:.5rem; border-bottom:1.5px solid var(--rule);
+  background:radial-gradient(120% 90% at 8% 0%,var(--glow),transparent 64%);
+}
+h1{
+  font-family:var(--display); font-weight:800;
+  font-size:clamp(2.1rem,6vw,3.1rem); line-height:1.02; letter-spacing:-.034em;
+  margin:0 0 .85rem; text-wrap:balance;
+}
+.lede{color:var(--ink-soft); margin:0; max-width:34rem}
+
+ul.posts{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+ul.posts li{border-bottom:1px solid var(--rule-soft)}
+ul.posts a{display:block; padding:1.7rem 0; border:0}
+ul.posts a:hover .t{color:var(--brass)}
+.when{
+  font-family:var(--mono); font-size:.6875rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--slate); display:block; margin-bottom:.5rem;
+}
+.t{
+  font-family:var(--display); font-weight:800; font-size:1.42rem;
+  letter-spacing:-.022em; color:var(--ink); display:block; margin-bottom:.4rem;
+  text-wrap:balance;
+}
+.d{color:var(--ink-soft); display:block; max-width:36rem; font-size:.98rem}
+
+footer{margin-top:3rem; color:var(--slate); font-size:.95rem}
+footer a{border-bottom:1px solid var(--rule)}
+footer a:hover{border-bottom-color:var(--brass)}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<a class="back" href="/">&larr; Drew Thomas</a>
+
+<header>
+  <h1>Writing</h1>
+  <p class="lede">Things that broke in a way I had to go and understand, written down while the
+  detail was still fresh. Mostly Postgres, background jobs, and the parts of compliance that
+  turn out to be engineering problems.</p>
+</header>
+
+<ul class="posts">
+  <li>
+    <a href="/writing/postgres-now-vs-clock-timestamp.html">
+      <span class="when">13 August 2026 &middot; Postgres</span>
+      <span class="t">NOW() is not now</span>
+      <span class="d">Postgres <code>NOW()</code> is <code>transaction_timestamp()</code>, frozen
+      when the transaction opened. In a distributed lease that makes an expired lock read as
+      still held — silently, in one direction, and only once somebody passes a transaction
+      handle.</span>
+    </a>
+  </li>
+</ul>
+
+<footer>
+  <p><a href="/">Back to the site</a> &middot; <a href="https://github.com/drewthomas00">GitHub</a></p>
+</footer>
+
+</div>
+</body>
+</html>
