@@ -44,6 +44,12 @@ Two things to keep right:
 
 - **Give each post its own URL.** The point of writing these is having something to
   link to from an answer, a comment or a post; a combined page cannot be pointed at.
+- **Link without the `.html`.** Cloudflare Pages serves `/writing/some-post` and
+  307-redirects `/writing/some-post.html` to it. Files keep their `.html` names on
+  disk — only the URLs drop it. Getting this wrong is mostly invisible: internal links
+  still work, they just take an extra hop. What it actually costs you is `canonical`
+  and `og:url` pointing at a URL that redirects, which is an SEO error and the exact
+  tag a link preview reads.
 - **`og:url` and `<link rel="canonical">` must match the file's real path.** They are
   the two lines most easily left pointing at whichever post was copied.
 
