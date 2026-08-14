@@ -117,6 +117,13 @@ a:hover{color:var(--brass-lit)}
 .col p strong{color:var(--ink); font-weight:500}
 .col p em{font-style:italic}
 
+/* Portrait — closes the origin story; sized to sit inside the prose, not above it */
+.portrait{margin:.35rem 0 0}
+.portrait img{
+  display:block; width:clamp(8.5rem,20vw,10.5rem); height:auto; aspect-ratio:1;
+  object-fit:cover; border-radius:2px; border:1px solid var(--rule);
+}
+
 /* ─── Stat strip ───────────────────────────────────────── */
 .stats{
   display:grid; grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));
@@ -364,6 +371,13 @@ html{scroll-behavior:smooth}
         didn&rsquo;t plan on was that working a salon floor would show me a software problem I
         couldn&rsquo;t put back down.
       </p>
+      <figure class="portrait">
+        <picture>
+          <source srcset="/drew-thomas.webp" type="image/webp">
+          <img src="/drew-thomas.jpg" width="400" height="400" alt="Drew Thomas"
+               loading="lazy" decoding="async">
+        </picture>
+      </figure>
     </div>
   </div>
 </section>
