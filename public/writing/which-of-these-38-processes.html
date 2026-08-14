@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which of these 38 processes is eating 20 GB? — Drew Thomas</title>
+<meta name="description" content="VS Code is thirty-odd processes sharing one name, and reloading the window to survive destroys the evidence. Sampling per tier named the leak in four hours.">
+<link rel="canonical" href="https://drewthomasbuilds.com/writing/which-of-these-38-processes.html">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Which of these 38 processes is eating 20 GB?">
+<meta property="og:description" content="VS Code is thirty-odd processes sharing one name, and reloading the window to survive destroys the evidence. Sampling per tier named the leak in four hours.">
+<meta property="og:url" content="https://drewthomasbuilds.com/writing/which-of-these-38-processes.html">
+<meta property="og:image" content="https://drewthomasbuilds.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/writing/post.css">
+</head>
+<body>
+<article class="sheet">
+
+<a class="back" href="/writing.html">&larr; Writing</a>
+
+<h1>Which of these 38 processes is eating 20 GB?</h1>
+<p class="dateline">13 August 2026 &middot; Debugging</p>
+
+<p class="standfirst">The reload that saves your machine is the same action that destroys the
+evidence. So I stopped reloading and started sampling.</p>
+
+<p>
+  Every couple of days my editor would climb to fifteen or twenty gigabytes and fall over. The
+  usual advice applies — reload the window, carry on — and it works, which is exactly the problem.
+  Whatever was leaking is gone the instant you recover, and you learn nothing. I did that for
+  months.
+</p>
+
+<p>
+  The reason it resists casual debugging is that VS Code is not a process. It is thirty to fifty of
+  them: a main process, a GPU process, a renderer per window, out-of-process iframes, the extension
+  host, language servers, whatever your extensions spawn. They mostly share one binary and one
+  name. <code>htop</code> shows you a wall of identical rows summing to 20&nbsp;GB and tells you
+  nothing about which row matters.
+</p>
+
+<h2>Sample tiers, not processes</h2>
+
+<p>
+  Individual PIDs are useless here — they come and go, and a leak that migrates between them looks
+  like noise. What is stable is the <em>tier</em>: renderer, exthost, language server, and so on.
+  Sample the whole tree every 60 seconds, bucket by tier, and the tier that climbs names itself.
+</p>
+
+<pre><code>$ vscode-memory-watch --once
+VS Code tree: 9589 MB PSS (12622 MB RSS) across 38 processes
+  renderer=4942MB exthost=497MB tsserver=346MB langserver=350MB
+  helper=191MB nodeutil=567MB gpu=83MB main=155MB
+  largest: renderer pid=3369519 at 4360 MB</code></pre>
+
+<p>
+  PSS rather than RSS, incidentally. These processes share a great deal of memory, so summing RSS
+  double-counts heavily and produces a number larger than the machine. Proportional set size
+  divides shared pages among the processes mapping them, so the tiers actually add up.
+</p>
+
+<h2>What four hours said</h2>
+
+<p>The tree went from 3.8&nbsp;GB to 7.5&nbsp;GB — roughly a gigabyte an hour. The split:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Tier</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td><strong>renderer</strong></td><td><strong>+2361 MB — 64% of all growth</strong></td></tr>
+    <tr><td>tsserver</td><td>peaked at 1784 MB, returned to 442 MB</td></tr>
+    <tr><td>exthost</td><td>+49 MB net</td></tr>
+    <tr><td>agent sessions</td><td>~265 MB each, flat per session</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  <code>tsserver</code> is the instructive one. It grew by a gigabyte and a third and then gave it
+  all back — that is a working set, not a leak, and staring at a point-in-time snapshot it would
+  have looked like the obvious culprit. Only the shape over time separates the two.
+</p>
+
+<p>
+  The renderer tier did not give it back. And it was not the tier leaking — it was
+  <strong>one process</strong> in it: 924&nbsp;MB to 3121&nbsp;MB, a monotonically rising floor with
+  ordinary GC sawtooth riding on top. The window's own renderer sat beside it at a stable
+  248&nbsp;MB the whole time.
+</p>
+
+<div class="pull">
+  <p>
+    A rising floor under a sawtooth is the signature worth learning. Garbage collection is working
+    perfectly — memory is released on every cycle — but the low-water mark after each collection is
+    higher than the last. Something is holding a reference it should have dropped.
+  </p>
+</div>
+
+<p>
+  The offending process turned out to be an out-of-process iframe hosting a chat panel, spawned
+  with no heap cap, retaining every message ever rendered. That matched an
+  <a href="https://github.com/anthropics/claude-code/issues/84013">open upstream issue</a> exactly,
+  and several older ones describing the same shape. Which is the useful outcome: not a fix I could
+  apply, but a specific, evidenced thing to point at instead of "the editor leaks."
+</p>
+
+<h2>Ruling things out is most of the work</h2>
+
+<p>The sampling also killed three theories I had been carrying, each in one measurement:</p>
+
+<ul>
+  <li>
+    <strong>Not the system OOM killer.</strong> 62&nbsp;GB of RAM, zero OOM kills in the journal,
+    <code>systemd-oomd</code> inactive. The editor was dying on a per-process V8 heap limit, which
+    is a completely different failure with completely different fixes.
+  </li>
+  <li>
+    <strong>Not a runaway loop.</strong> 22 hours of extension logs showed ~2,900 ordinary API
+    turns and no repeating error storm.
+  </li>
+  <li>
+    <strong>Not session restore.</strong> A fresh session sat at 238&nbsp;MB; one resuming a
+    224&nbsp;MB transcript sat at 295&nbsp;MB. Strongly sublinear — so growth was live accumulation,
+    not loading history.
+  </li>
+</ul>
+
+<h2>Anchor on the thing only a real instance has</h2>
+
+<p>
+  One implementation detail worth stealing, because getting it wrong corrupts the data silently.
+</p>
+
+<p>
+  The obvious way to find the process tree is to pattern-match the main process by its command
+  line. That breaks in a way you will not notice: <code>code --wait</code>, used as your
+  <code>$GIT_EDITOR</code>, spawns Chromium children and matches every pattern a real main process
+  does. Adopt it as an instance and — since a change in the set of main processes is what ends a
+  measurement run — <strong>a routine <code>git commit</code> silently discards hours of accumulated
+  curve.</strong>
+</p>
+
+<p>
+  So instead: find every <em>renderer</em>, walk up to whatever owns it, and check that the owner
+  looks like an editor before walking back down. A renderer is the one thing only a real editor
+  instance has. That check matters twice over, because every Electron app has renderers — without
+  it, Signal or Obsidian running on the system <code>electron</code> binary gets adopted, merged
+  into your totals, and ends your run when the user quits it.
+</p>
+
+<p>
+  The walk stops at anything that is not a known VS Code process type, and skips anything with a
+  controlling terminal — except the terminal the editor was launched from. An extension's language
+  server counts; the <code>cargo build</code> you started in the integrated terminal does not. That
+  is your memory, not the editor's, and sweeping it in would inflate the headline and fire the alert
+  for the wrong reason.
+</p>
+
+<h2>The point</h2>
+
+<p>
+  I did not fix this bug. It is upstream and it is still open. But "VS Code eats 20&nbsp;GB" — a
+  complaint with nothing actionable in it — became "this specific process grows one gigabyte an
+  hour with a monotonic floor, here is the CSV," which is a thing a maintainer can act on and a
+  thing I can plan around.
+</p>
+
+<p>
+  The general version: when the recovery action destroys the evidence, instrument before you
+  recover. It took an afternoon of sampling to answer a question I had been guessing at for months.
+</p>
+
+<footer>
+  <p>
+    <a href="https://github.com/drewthomas00/vscode-memory-watch">vscode-memory-watch</a> is the
+    sampler — a bash script and a systemd user unit, no dependencies beyond coreutils and
+    <code>/proc</code>. It warns before the crash and dumps a full snapshot at the moment things go
+    bad, so the evidence outlives the reload.
+  </p>
+  <p><a href="/">Drew Thomas</a> &middot; <a href="/writing.html">More writing</a></p>
+</footer>
+
+</article>
+</body>
+</html>

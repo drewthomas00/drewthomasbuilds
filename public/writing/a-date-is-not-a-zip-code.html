@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2024-01-15 is not a ZIP code — Drew Thomas</title>
+<meta name="description" content="Any string with five digits in it can be read as a ZIP code. A naive parser turns a date into real coordinates in Washington DC, and downstream nothing can tell the difference.">
+<link rel="canonical" href="https://drewthomasbuilds.com/writing/a-date-is-not-a-zip-code.html">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2024-01-15 is not a ZIP code">
+<meta property="og:description" content="Any string with five digits in it can be read as a ZIP code. A naive parser turns a date into real coordinates in Washington DC, and downstream nothing can tell the difference.">
+<meta property="og:url" content="https://drewthomasbuilds.com/writing/a-date-is-not-a-zip-code.html">
+<meta property="og:image" content="https://drewthomasbuilds.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/writing/post.css">
+</head>
+<body>
+<article class="sheet">
+
+<a class="back" href="/writing.html">&larr; Writing</a>
+
+<h1>2024-01-15 is not a ZIP code</h1>
+<p class="dateline">13 August 2026 &middot; Data</p>
+
+<p class="standfirst">It geocodes anyway — to a real point on the National Mall — and nothing
+downstream can tell that answer from a correct one.</p>
+
+<p>
+  Resolving a US ZIP code to coordinates offline is a small problem. You ship the Census ZCTA
+  Gazetteer, about 33,000 rows of <code>zip,lat,lng</code>, and look it up. No geocoder, no API
+  key, no per-request fee, and — often the actual reason — the address never leaves your
+  infrastructure, which is a data-sharing decision as much as a technical one.
+</p>
+
+<p>The lookup is the easy half. The parsing is where this goes wrong.</p>
+
+<h2>Five digits is a very low bar</h2>
+
+<p>
+  The obvious implementation pulls the first five digits out of whatever it is handed. Watch what
+  that does to input that is not a ZIP code:
+</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Input</th><th>Naive result</th><th>Where that is</th></tr></thead>
+  <tbody>
+    <tr><td><code>'2024-01-15'</code></td><td><code>20240</code></td><td>Washington, DC</td></tr>
+    <tr><td><code>'Suite 200, 123 Main St'</code></td><td><code>20012</code></td><td>Washington, DC</td></tr>
+    <tr><td><code>'404-555-1234'</code></td><td><code>40455</code></td><td>Kentucky</td></tr>
+    <tr><td><code>'order #98 qty 7654'</code></td><td><code>98765</code></td><td>Washington state</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  A date and a street address both land in DC. Those are not errors that fail — they are real
+  ZCTAs with real centroids, and they come back as ordinary successful lookups.
+</p>
+
+<div class="pull">
+  <p>
+    A wrong coordinate is worse than no coordinate, because downstream it is indistinguishable from
+    a right one. A null is a question. A point on the National Mall is an answer, and everything
+    after it — the distance sort, the radius filter, the map pin — treats it as fact.
+  </p>
+</div>
+
+<h2>What actually counts as a ZIP</h2>
+
+<p>
+  The fix is to stop pattern-matching for digits and start recognising shapes. Three of them are
+  legitimate; everything else is a null:
+</p>
+
+<ol>
+  <li>
+    <strong>The whole value is a ZIP or ZIP+4.</strong> <code>'30305'</code>,
+    <code>'30305-1234'</code>, <code>'303051234'</code>.
+  </li>
+  <li>
+    <strong>Digits and separators only</strong>, at exactly 5 or 9 digits —
+    <code>'3 0 3 0 5'</code>. Somebody reading their ZIP aloud produces this. The digit count is
+    what does the work: a phone number has ten and a date has eight, so both fall out rather than
+    being truncated to fit.
+  </li>
+  <li>
+    <strong>A delimited five-digit run inside prose</strong> — <code>'Atlanta, GA 30305'</code>.
+    Delimited matters: <code>'Suite 200, 123 Main St'</code> has no five-digit run that is not
+    butted against other digits, so it is a null rather than <code>20012</code>.
+  </li>
+</ol>
+
+<p>
+  Everything about that list is about refusing plausible input. It is a strange thing to optimise
+  for until you have shipped the alternative.
+</p>
+
+<h2>The leading-zero asymmetry</h2>
+
+<p>
+  There is one case where guessing <em>is</em> correct, and it is the one people usually get
+  backwards.
+</p>
+
+<p>
+  Northeastern ZIP codes start with zero, and the moment anything treats one as a number the zero
+  is gone. <code>01001</code> — Agawam, Massachusetts — comes out of a numeric column as
+  <code>1001</code>. Read that as a prefix and you get <code>100</code>, which is New York: the
+  wrong state, and a plausible-looking one.
+</p>
+
+<p>So a <em>number</em> gets padded, because recovering the zero is lossless rather than a guess:</p>
+
+<pre><code>normalizeZip(1001)     // '01001'  — a number cannot carry a leading zero
+normalizeZip('1001')   // null     — a string of four digits is a typo</code></pre>
+
+<p>
+  Same digits, opposite treatment, and both are right. An integer <code>1001</code> can only have
+  meant <code>01001</code>; there is no five-digit ZIP whose numeric value is 1001 and no other
+  reading. A <em>string</em> <code>'1001'</code> arrived as text through something that preserves
+  zeros, so its four characters are what someone actually typed — as likely a truncated entry as a
+  mangled ZIP, and not worth guessing at.
+</p>
+
+<p>
+  This is, in my experience, the single most common source of "why does Massachusetts geocode to
+  nowhere".
+</p>
+
+<h2>Fail loud on the data file too</h2>
+
+<p>
+  One more silent failure worth designing against. When the dataset does not load — wrong path,
+  truncated file, a permissions problem — the natural behaviour is for every lookup to return
+  null. Which reads, from every call site, exactly like <em>we do not cover those ZIP codes</em>.
+</p>
+
+<p>
+  So the loader reports what it actually loaded, and you assert on it once at startup rather than
+  discovering it one null at a time:
+</p>
+
+<pre><code>const { entries, error } = datasetInfo();
+if (error) throw new Error(`ZIP centroids unusable: ${error}`);</code></pre>
+
+<p>
+  Worth guarding in CI as well, if the data ships inside the package. A file list that stops
+  matching <code>data/</code> produces a package that installs cleanly and returns null for
+  everything — and every test still passes, because tests run against the source tree rather than
+  the built artifact. Packing the tarball, installing it into an empty project and geocoding one
+  known ZIP catches it.
+</p>
+
+<footer>
+  <p>
+    This is <a href="https://github.com/drewthomas00/us-zip-centroids">us-zip-centroids</a> — the
+    Census Gazetteer, the parser above, and a bounds check on every row, since a caller-supplied
+    table can otherwise put somebody at latitude 999.
+  </p>
+  <p><a href="/">Drew Thomas</a> &middot; <a href="/writing.html">More writing</a></p>
+</footer>
+
+</article>
+</body>
+</html>

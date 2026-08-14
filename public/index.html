@@ -137,6 +137,22 @@ a:hover{color:var(--brass-lit)}
   .portrait{float:none; width:9rem; margin:0 0 1.45rem}
 }
 
+/* ─── Writing list ─────────────────────────────────────── */
+.notes{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.notes li{border-top:1px solid var(--rule-soft)}
+.notes li:last-child{border-bottom:1px solid var(--rule-soft)}
+.notes a{display:block; padding:.95rem 0; border:0; color:inherit}
+.notes a:hover .nt{color:var(--brass)}
+.nt{
+  font-family:var(--display); font-weight:600; font-size:1.06rem;
+  letter-spacing:-.014em; color:var(--ink); display:block; margin-bottom:.15rem;
+}
+.nd{color:var(--slate); font-size:.95rem; display:block; max-width:34rem}
+.more{
+  font-family:var(--mono); font-size:.6875rem; letter-spacing:.14em;
+  text-transform:uppercase; border:0;
+}
+
 /* ─── Stat strip ───────────────────────────────────────── */
 .stats{
   display:grid; grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));
@@ -296,7 +312,7 @@ html{scroll-behavior:smooth}
     <a href="#capability">Capability</a>
     <a href="#contract">Contract</a>
     <a href="#life">Off the clock</a>
-    <a href="/writing.html">Writing</a>
+    <a href="#writing">Writing</a>
     <a href="#contact">Contact</a>
   </div>
 </nav>
@@ -570,6 +586,47 @@ html{scroll-behavior:smooth}
           <p>I play piano and guitar &mdash; mostly learning other people&rsquo;s songs. There is music on almost constantly, and when there isn&rsquo;t I&rsquo;m watching a film or a show, or playing something. My taste across all of it is very broad. I can appreciate pretty much anything that was made with artistic vision and care.</p>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="writing">
+  <div class="grid">
+    <div class="rail">Writing</div>
+    <div class="col">
+      <h2 class="h">Things worth writing down</h2>
+      <p>
+        Bugs that took real work to understand, written up while the detail was still fresh.
+        Each one is a thing that failed silently in production &mdash; which is the kind I find
+        worth the trouble.
+      </p>
+      <ul class="notes">
+        <li>
+          <a href="/writing/postgres-now-vs-clock-timestamp.html">
+            <span class="nt">NOW() is not now</span>
+            <span class="nd">A Postgres lock that stops working the moment you pass it a transaction.</span>
+          </a>
+        </li>
+        <li>
+          <a href="/writing/which-of-these-38-processes.html">
+            <span class="nt">Which of these 38 processes is eating 20 GB?</span>
+            <span class="nd">The reload that saves your machine destroys the evidence.</span>
+          </a>
+        </li>
+        <li>
+          <a href="/writing/twilio-signature-behind-a-proxy.html">
+            <span class="nt">Four ways a valid Twilio signature looks invalid</span>
+            <span class="nd">All four report the same single bit of information back.</span>
+          </a>
+        </li>
+        <li>
+          <a href="/writing/a-date-is-not-a-zip-code.html">
+            <span class="nt">2024-01-15 is not a ZIP code</span>
+            <span class="nd">It geocodes anyway &mdash; to a real point in Washington DC.</span>
+          </a>
+        </li>
+      </ul>
+      <p><a class="more" href="/writing.html">All writing &rarr;</a></p>
     </div>
   </div>
 </section>

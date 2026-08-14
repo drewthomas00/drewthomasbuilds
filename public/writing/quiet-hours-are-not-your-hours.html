@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet hours are not your hours — Drew Thomas</title>
+<meta name="description" content="The TCPA bars marketing messages outside 8am–9pm in the called party's local time. Not yours. And the window is not 8-to-9 everywhere.">
+<link rel="canonical" href="https://drewthomasbuilds.com/writing/quiet-hours-are-not-your-hours.html">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Quiet hours are not your hours">
+<meta property="og:description" content="The TCPA bars marketing messages outside 8am–9pm in the called party's local time. Not yours. And the window is not 8-to-9 everywhere.">
+<meta property="og:url" content="https://drewthomasbuilds.com/writing/quiet-hours-are-not-your-hours.html">
+<meta property="og:image" content="https://drewthomasbuilds.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/writing/post.css">
+</head>
+<body>
+<article class="sheet">
+
+<a class="back" href="/writing.html">&larr; Writing</a>
+
+<h1>Quiet hours are not your hours</h1>
+<p class="dateline">13 August 2026 &middot; Compliance</p>
+
+<p class="standfirst">Gate your marketing sends on the server clock and you are not compliant.
+You are compliant in one timezone, by accident.</p>
+
+<p>
+  The federal rule is short. <a href="https://www.ecfr.gov/current/title-47/chapter-I/subchapter-B/part-64/subpart-L/section-64.1200">47
+  CFR 64.1200</a> bars telemarketing before 8&nbsp;AM or after 9&nbsp;PM — <strong>in the called
+  party's local time</strong>. Four words that turn a trivial time check into a jurisdiction
+  problem.
+</p>
+
+<p>
+  An 8:30&nbsp;PM send from a California sender is lawful for a recipient in California and
+  unlawful for one in Maryland. Same instant, same queue, same code path. The only thing that
+  differs is where the phone is, which your scheduler does not know.
+</p>
+
+<h2>The window is not 8-to-9 everywhere</h2>
+
+<p>Several states are stricter than federal, and not in the same direction:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Jurisdiction</th><th>Window</th><th>Sundays</th></tr></thead>
+  <tbody>
+    <tr><td>Federal default</td><td>8:00 AM – 9:00 PM</td><td>permitted</td></tr>
+    <tr><td>Maryland</td><td>8:00 AM – 8:00 PM</td><td>permitted</td></tr>
+    <tr><td>Alabama, Florida, Louisiana, Mississippi</td><td>8:00 AM – 8:00 PM</td><td><strong>banned</strong></td></tr>
+    <tr><td>Utah</td><td>8:00 AM – 9:00 PM</td><td><strong>banned</strong></td></tr>
+    <tr><td>South Dakota</td><td>9:00 AM – 9:00 PM</td><td><strong>banned</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  So the check needs the recipient's <em>state</em>, not just their offset — and it needs their
+  local weekday, because a Sunday blackout is evaluated on their calendar. Saturday 11:30&nbsp;PM
+  in California is already Sunday in Miami.
+</p>
+
+<h2>Area codes travel</h2>
+
+<p>
+  The tempting shortcut is to derive a timezone from the phone number. It mostly works, and its
+  failure mode is quiet.
+</p>
+
+<p>
+  Someone who moved from Chicago to Phoenix keeps their 312 number for a decade. You will place
+  them in Central time, observing DST. They are in Arizona, which does not observe it. For half the
+  year you are an hour off, in a system where being an hour off is the entire question.
+</p>
+
+<p>
+  A ZIP code is geographic and cannot follow a person, so it beats an area code whenever you have
+  one. Both beat nothing. What matters is that the verdict records <em>which signal it used</em>,
+  because six months later somebody will ask why a particular message went out at 8:30&nbsp;PM and
+  "we think it was the area code" is not an answer:
+</p>
+
+<pre><code>{
+  eligible: false,
+  reason: 'outside_window',
+  state: 'MD',
+  timezone: 'America/New_York',
+  source: 'zip',
+  ruleApplied: 'MD'
+}</code></pre>
+
+<h2>Fail closed, including on the weekday</h2>
+
+<p>
+  Every unresolvable input has to mean <em>no</em>. No timezone, an unparseable zone, a bad clock:
+  all ineligible. An unknown recipient location is not permission.
+</p>
+
+<p>
+  The one that is easy to miss is the weekday. If you read the local day and cannot map it, the
+  tempting default is "not Sunday" — and that quietly turns six state blackouts into a no-op. A day
+  you could not read is not a day you may ignore.
+</p>
+
+<p>
+  There is a related trap in reading the clock at all. Some ICU builds report midnight as hour
+  <code>24</code> rather than <code>0</code>. Unhandled, a message at 00:15 evaluates as 24:15,
+  every window comparison inverts, and the quiet-hours check starts permitting exactly the sends it
+  exists to block.
+</p>
+
+<h2>Defer, do not drop</h2>
+
+<p>
+  Knowing "not now" only lets you throw the message away. That is rarely what anyone wants — an
+  operator who scheduled a 9:30&nbsp;PM blast wants it at 8&nbsp;AM, not deleted. So the useful
+  question is not <em>may I send this?</em> but <em>when may I?</em>
+</p>
+
+<p>
+  Computing that is where a subtle bug lives. The obvious approach adds elapsed milliseconds until
+  you land inside the window — but a DST transition in between moves the wall clock underneath the
+  arithmetic. Aim at 8:00&nbsp;AM across a spring-forward and you arrive at 9:00. Everything defers
+  an hour late, twice a year, in a way that looks fine in every test written in June.
+</p>
+
+<p>
+  The fix is to re-read the recipient's clock after the jump and correct for the difference, rather
+  than trusting that elapsed time and wall-clock time agree. They do not, and that is the whole
+  reason this is hard.
+</p>
+
+<h2>Say what you have not verified</h2>
+
+<p>
+  Encoding law in a lookup table creates an obligation the code cannot discharge. Statutes get
+  amended; a table that was right when written goes stale silently, and its confidence never
+  changes.
+</p>
+
+<p>
+  So each rule carries the statute it came from and a <code>lastVerified</code> date — and in the
+  package this came out of, <code>lastVerified</code> is <code>null</code> on every rule, because
+  they were compiled from secondary sources and I am not an attorney. That is a worse-looking field
+  than a date. It is also the honest one, and it tells a reader exactly which claim to check before
+  relying on it.
+</p>
+
+<footer>
+  <p>
+    The evaluator is <a href="https://github.com/drewthomas00/tcpa-quiet-hours">tcpa-quiet-hours</a>
+    — pure functions, no dependencies, and a test suite that runs under a non-UTC <code>TZ</code>,
+    because a timezone library that only passes on a UTC machine has not been tested. Not legal
+    advice.
+  </p>
+  <p><a href="/">Drew Thomas</a> &middot; <a href="/writing.html">More writing</a></p>
+</footer>
+
+</article>
+</body>
+</html>

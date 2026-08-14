@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Four ways a valid Twilio signature looks invalid — Drew Thomas</title>
+<meta name="description" content="Twilio signs the exact public URL it POSTs to. Behind a reverse proxy the request no longer resembles what Twilio saw, and all four failures produce the same unhelpful error.">
+<link rel="canonical" href="https://drewthomasbuilds.com/writing/twilio-signature-behind-a-proxy.html">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Four ways a valid Twilio signature looks invalid">
+<meta property="og:description" content="Twilio signs the exact public URL it POSTs to. Behind a reverse proxy the request no longer resembles what Twilio saw, and all four failures produce the same unhelpful error.">
+<meta property="og:url" content="https://drewthomasbuilds.com/writing/twilio-signature-behind-a-proxy.html">
+<meta property="og:image" content="https://drewthomasbuilds.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/plexmono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/writing/post.css">
+</head>
+<body>
+<article class="sheet">
+
+<a class="back" href="/writing.html">&larr; Writing</a>
+
+<h1>Four ways a valid Twilio signature looks invalid</h1>
+<p class="dateline">13 August 2026 &middot; Webhooks</p>
+
+<p class="standfirst">Signature verification is five lines until you put a reverse proxy in
+front of it. Then it is four separate bugs that all report the same thing.</p>
+
+<p>
+  Twilio signs its webhooks by computing an HMAC over <strong>the exact public URL it is
+  POSTing to</strong>, plus the POST parameters. To verify one, you reconstruct that URL from the
+  request you received and check that you get the same signature.
+</p>
+
+<p>
+  That reconstruction is the whole problem. On a laptop, with the app directly exposed, it is
+  trivial. In production, behind nginx or a load balancer or Cloudflare, the request that arrives
+  at your process no longer resembles the one Twilio sent — and every difference breaks the hash.
+</p>
+
+<p>
+  There are four of them. They are independent, they can stack, and all four surface as the same
+  line in your logs: <code>invalid signature</code>. Meanwhile your webhook is rejecting real
+  traffic and looking, from the outside, like it is correctly turning away forgeries.
+</p>
+
+<h2>1. The scheme is wrong</h2>
+
+<p>
+  Twilio signed <code>https://…</code>. Your TLS terminates at the edge, so by the time the
+  request reaches your app it is plain HTTP and <code>req.protocol</code> says <code>http</code>.
+  Reconstruct with that and every signature fails.
+</p>
+
+<p>
+  The usual fix is to read <code>X-Forwarded-Proto</code>, which is right until you have two
+  proxies. A chained edge — Cloudflare in front of nginx — sends a <em>list</em>:
+</p>
+
+<pre><code>X-Forwarded-Proto: https, http</code></pre>
+
+<p>
+  Take that header at face value and you build
+  <code>https, http://host/path</code>, which is not a URL and matches nothing. Only the leftmost
+  value is the scheme the public client actually spoke.
+</p>
+
+<h2>2. The host is your internal one</h2>
+
+<p>
+  nginx passes its own upstream name through unless you explicitly tell it not to, so
+  <code>Host</code> arrives as something like <code>app.internal:3000</code> rather than the public
+  name Twilio signed. <code>X-Forwarded-Host</code> carries the real one, and it chains the same
+  way, so it needs the same leftmost-value treatment.
+</p>
+
+<h2>3. The path is missing a segment</h2>
+
+<p>A proxy rule like this one:</p>
+
+<pre><code>location /sms/ { proxy_pass http://app/; }</code></pre>
+
+<p>
+  strips <code>/sms</code> before your app ever sees the path. Note the trailing slash on
+  <code>proxy_pass</code> — that is what does the stripping, and it is easy to write without
+  meaning to. Twilio signed the URL <em>with</em> that segment; your app reconstructs it without.
+</p>
+
+<h2>4. The query string got dropped</h2>
+
+<p>
+  Twilio signs the URL including its query. This matters most for outbound call status callbacks,
+  where the parameters you attached are part of what is signed. In Express, the trap is reaching
+  for <code>req.path</code> or <code>req.url</code> — <code>req.originalUrl</code> is the one that
+  preserves both the mount path and the query.
+</p>
+
+<div class="pull">
+  <p>
+    Every one of these produces a byte-different URL, and HMAC has no notion of nearly. You get one
+    bit of information back — no — for four unrelated causes.
+  </p>
+</div>
+
+<h2>Trusting forwarded headers is fine here</h2>
+
+<p>
+  The reflex is that reading <code>X-Forwarded-*</code> is unsafe because a client can forge them.
+  True in general, irrelevant here: an attacker who lies about the scheme or host still cannot
+  produce a signature valid for the URL they claimed. The only request they break is their own. It
+  fails closed either way.
+</p>
+
+<h2>Report which one it was</h2>
+
+<p>
+  The single most useful thing you can do is put the reconstructed URL in the log line. When
+  verification fails spuriously it is almost always because that URL is not the one Twilio signed,
+  and seeing it tells you immediately which of the four you have:
+</p>
+
+<pre><code>Twilio signature rejected on /api/messages/webhook from 10.0.0.1:
+  invalid_signature (http://app.internal:3000/api/messages/webhook)</code></pre>
+
+<p>
+  That line names two of the four at a glance — <code>http</code> where it should say
+  <code>https</code>, and an internal hostname.
+</p>
+
+<h2>Two more that are not URL problems</h2>
+
+<p>
+  <strong>JSON webhooks are signed differently.</strong> For those, Twilio puts a SHA-256 of the
+  body in the URL as a <code>bodySHA256</code> parameter and signs the URL alone. Feed the parsed
+  JSON in as form parameters — which is what the ordinary path does — and you reject every
+  legitimate request. You need the raw body, captured before parsing:
+</p>
+
+<pre><code>app.use(express.json({
+  verify: (req, res, buf) =&gt; { req.rawBody = buf.toString('utf8'); },
+}));</code></pre>
+
+<p>
+  <strong>And forgetting the body parser deserves its own error.</strong> Signature validation
+  covers POST parameters, so if <code>req.body</code> is undefined the hash cannot match. That is
+  the most common first-run mistake, and it looks exactly like a forgery unless you check for it
+  explicitly and say so.
+</p>
+
+<h2>The 403 that should be a 500</h2>
+
+<p>
+  Last one, and it is the one that bites during an incident rather than during setup. These
+  failures are not the same kind of thing:
+</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Cause</th><th>Whose fault</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>Missing or bad signature</td><td>the caller's</td><td>403</td></tr>
+    <tr><td>Unparsed body, no Host</td><td>the caller's, effectively</td><td>403</td></tr>
+    <tr><td><strong>Auth token failed to load</strong></td><td><strong>yours</strong></td><td><strong>500</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Collapse them all into 403 and a webhook rejecting <em>all</em> traffic because a secret did not
+  load looks identical to ordinary spam being turned away. Your dashboards show a healthy service
+  declining bad requests. Nobody pages.
+</p>
+
+<p>
+  Split them — but split by an explicit set of reasons, not by matching strings, and put only
+  failures <em>no request can provoke</em> in the 500 bucket. Otherwise an unauthenticated stranger
+  can manufacture your error budget by choosing what to send.
+</p>
+
+<footer>
+  <p>
+    All of this is in <a href="https://github.com/drewthomas00/twilio-signature-verify">twilio-signature-verify</a>,
+    which does the reconstruction, returns a stable reason code for each failure, and never throws.
+    Its tests sign with the real Twilio SDK rather than a mock, so they exercise the actual
+    algorithm.
+  </p>
+  <p><a href="/">Drew Thomas</a> &middot; <a href="/writing.html">More writing</a></p>
+</footer>
+
+</article>
+</body>
+</html>
