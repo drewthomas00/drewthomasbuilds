@@ -18,56 +18,16 @@
 <link rel="preload" href="/fonts/newsreader-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/plexmono-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/base.css">
 <style>
 /* ─── Type ─────────────────────────────────────────────── */
-@font-face{font-family:'Bricolage';src:url(/fonts/bricolage-600.woff2) format('woff2');font-weight:600;font-style:normal;font-display:swap}
-@font-face{font-family:'Bricolage';src:url(/fonts/bricolage-800.woff2) format('woff2');font-weight:800;font-style:normal;font-display:swap}
-@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-500.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
-@font-face{font-family:'Newsreader';src:url(/fonts/newsreader-400-italic.woff2) format('woff2');font-weight:400;font-style:italic;font-display:swap}
-@font-face{font-family:'PlexMono';src:url(/fonts/plexmono-400.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'PlexMono';src:url(/fonts/plexmono-500.woff2) format('woff2');font-weight:500;font-style:normal;font-display:swap}
 
 /* ─── Tokens: light is the base, both dark states override ─ */
-:root{
-  --paper:#EFEFEC; --surface:#E6E6E1; --sunk:#E0E0DA;
-  --ink:#15171A; --ink-soft:#3E434A; --slate:#6A7079;
-  --rule:#D3D3CC; --rule-soft:#DFDFD8;
-  --brass:#8A5D1B; --brass-lit:#B8802E; --verdigris:#3A6259;
-  --glow:rgba(184,128,46,.13);
-  --display:'Bricolage',system-ui,sans-serif;
-  --body:'Newsreader',Georgia,serif;
-  --mono:'PlexMono',ui-monospace,monospace;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
-    --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
-    --rule:#292D33; --rule-soft:#1F2329;
-    --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
-    --glow:rgba(224,163,74,.10);
-  }
-}
-:root[data-theme="dark"]{
-  --paper:#131518; --surface:#1A1D22; --sunk:#0E1013;
-  --ink:#E9E9E5; --ink-soft:#B8BCC2; --slate:#868C94;
-  --rule:#292D33; --rule-soft:#1F2329;
-  --brass:#E0A34A; --brass-lit:#F0BC6E; --verdigris:#78A99B;
-  --glow:rgba(224,163,74,.10);
-}
 
 /* ─── Base ─────────────────────────────────────────────── */
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0; background:var(--paper); color:var(--ink);
-  font-family:var(--body); font-size:1.0625rem; line-height:1.62;
-  font-synthesis-weight:none; -webkit-font-smoothing:antialiased;
-}
 p{margin:0}
 a{color:var(--brass); text-underline-offset:.18em; text-decoration-thickness:.06em}
 a:hover{color:var(--brass-lit)}
-:focus-visible{outline:2px solid var(--brass-lit); outline-offset:3px; border-radius:2px}
 
 /* ─── The rail grid ────────────────────────────────────── */
 .band{border-top:1px solid var(--rule-soft)}

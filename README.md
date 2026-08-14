@@ -8,14 +8,24 @@ Personal site. Static, no framework, no build step. Deployed on Cloudflare Pages
 
 | File | What it is |
 |---|---|
-| `public/index.html` | The site. All copy and CSS live here. |
-| `public/resume.html` | The one-page résumé. |
+| `public/base.css` | Typefaces, palette, reset, base type. Shared by everything except the résumé. |
+| `public/index.html` | The site. Its layout CSS is inline. |
+| `public/resume.html` | The one-page résumé. **Deliberately self-contained** — see below. |
 | `public/writing.html` | Index of the posts. |
 | `public/writing/*.html` | One file per post. |
-| `public/writing/post.css` | Shared by every post — tokens, faces, article typography. |
+| `public/writing/post.css` | Article typography, shared by every post. |
 | `public/drew-thomas.{webp,jpg}` | Portrait in the "How I got here" section. |
 | `public/fonts/*.woff2` | Bricolage Grotesque, Newsreader, IBM Plex Mono. |
-| `public/_headers` | Cache-control; fonts are cached for a year. |
+| `public/_headers` | Cache-control and security headers. |
+
+**The palette lives in exactly one place.** `base.css` holds the tokens, the
+`@font-face` set and the base type; each page adds only its own layout. Posts link
+`base.css` first, then `post.css`.
+
+**`resume.html` is the exception and must stay one.** It has its own palette — pure
+white paper, a darker brass — because it is tuned for print and is what `build.py`
+renders the PDF from. Pointing it at `base.css` would change the résumé's appearance
+and the PDF with it.
 
 Push to `main` and Cloudflare publishes it. There is no build command, so nothing
 in CI can break between a commit and a live site.
@@ -64,7 +74,12 @@ ps -eo pid,etimes,args | grep -- --headless=new
 - **Fonts are separate files, not embedded.** Earlier versions inlined them as
   base64, which made every page ~700 KB and forced a second download of the same
   typefaces when someone opened the résumé. Splitting them dropped the HTML to
-  ~27 KB and lets the browser cache the fonts across both pages.
+  ~27 KB and lets the browser cache the fonts across every page.
+- **Preload only what is above the fold, at the weight actually used.** A preload for
+  a face the page never requests is a wasted round trip, and one at the wrong weight
+  is worse than none — it fetches a file the page will not use and still stalls on the
+  one it needs. The posts preload four because all four are visible before scrolling:
+  body, body-italic (the standfirst), display 800, mono 400.
 - **Font URLs must stay absolute** (`/fonts/x.woff2`). This is no longer theoretical —
   the posts live in `/writing/`, so a relative path resolves against the wrong
   directory and silently falls back to a system typeface.
