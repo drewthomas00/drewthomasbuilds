@@ -18,6 +18,11 @@
 /og.png
   Cache-Control: public, max-age=604800
 
+# Plex guide badges (see README). Not pages, so keep them out of search results.
+/tv-logos/*
+  Cache-Control: public, max-age=86400
+  X-Robots-Tag: noindex
+
 /drew-thomas-resume.pdf
   Cache-Control: public, max-age=3600
 

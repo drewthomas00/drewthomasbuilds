@@ -17,6 +17,7 @@ Personal site. Static, no framework, no build step. Deployed on Cloudflare Pages
 | `public/drew-thomas.{webp,jpg}` | Portrait in the "How I got here" section. |
 | `public/fonts/*.woff2` | Bricolage Grotesque, Newsreader, IBM Plex Mono. |
 | `public/_headers` | Cache-control and security headers. |
+| `public/tv-logos/etv-*.png` | Channel badges for the homelab's Plex guide. Not part of the site: Plex only loads channel art from public URLs, so they're hosted here. Drawn by `etv-logos` on the TV box; replace a file by its same name. |
 
 **The palette lives in exactly one place.** `base.css` holds the tokens, the
 `@font-face` set and the base type; each page adds only its own layout. Posts link
